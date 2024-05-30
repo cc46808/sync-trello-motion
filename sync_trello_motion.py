@@ -93,7 +93,7 @@ def format_date_for_trello(date_str):
     if date_str:
         try:
             date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            return date_obj.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            return date_obj.isoformat()
         except ValueError:
             return date_str
     return None
@@ -109,7 +109,10 @@ def create_trello_task(task):
         'desc': task['description'],
         'due': format_date_for_trello(task.get('dueDate'))
     }
+    print(f"Creating Trello Task with payload: {query}")  # Debug line
     response = requests.post(url, params=query)
+    print(f"Trello API Response Status: {response.status_code}")  # Debug line
+    print(f"Trello API Response Data: {response.text}")  # Debug line
     response.raise_for_status()
     return response.json()
 
@@ -123,7 +126,10 @@ def update_trello_task(task_id, task):
         'desc': task['description'],
         'due': format_date_for_trello(task.get('dueDate'))
     }
+    print(f"Updating Trello Task with payload: {query}")  # Debug line
     response = requests.put(url, params=query)
+    print(f"Trello API Response Status: {response.status_code}")  # Debug line
+    print(f"Trello API Response Data: {response.text}")  # Debug line
     response.raise_for_status()
     return response.json()
 
