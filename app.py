@@ -1,9 +1,14 @@
+import os
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST', 'HEAD'])
 def handle_webhook():
+    if request.method == 'HEAD':
+        # Trello sends a HEAD request to verify the endpoint
+        return ('', 200)
+    # Process POST requests with actual data
     data = request.json
     print("Received webhook:", data)  # Log the webhook data
     return jsonify({"status": "success"}), 200
