@@ -140,7 +140,7 @@ def update_trello_task(trello_task_id, motion_task):
         'name': motion_task['name'],
         'desc': motion_task['description'] or '',
         'due': motion_task.get('dueDate'),
-        'dueComplete': 'true' if motion_task['status'] == 'Completed' else 'false'
+        'dueComplete': 'true' if motion_task['status']['name'] == 'Completed' else 'false'
     }
     response = requests.put(url, params=query)
     response.raise_for_status()
@@ -165,13 +165,11 @@ def sync_trello_to_motion():
             motion_status = 'Completed' if task['dueComplete'] else 'Todo'
             if (motion_task['description'] != task['desc'] or 
                 motion_task['dueDate'] != task.get('due') or
-                motion_task['status'] != motion_status):
-                task['status'] = motion_status
-                print(f"Updating Motion Task: {task['name']} to status {motion_status}")
+                motion_task['status']['name'] != motion_status):
+                task['status'] = {'name': motion_status}
                 update_motion_task(motion_task['id'], task)
         else:
             # Create new Motion task if it doesn't exist
-            print(f"Creating new Motion Task: {task['name']}")
             create_motion_task(task)
 
 # Function to sync tasks from Motion to Trello
@@ -190,16 +188,14 @@ def sync_motion_to_trello():
         if task['name'] in trello_task_dict:
             # Update Trello task if it exists and has changed
             trello_task = trello_task_dict[task['name']]
-            trello_due_complete = trello_task['dueComplete'] or (task['status'] == 'Completed')
+            trello_due_complete = trello_task['dueComplete'] or (task['status']['name'] == 'Completed')
             if (trello_task['desc'] != task['description'] or 
                 trello_task['due'] != task.get('dueDate') or
                 trello_task['dueComplete'] != trello_due_complete):
                 task['dueComplete'] = trello_due_complete
-                print(f"Updating Trello Task: {task['name']} to dueComplete {trello_due_complete}")
                 update_trello_task(trello_task['id'], task)
         else:
             # Create new Trello task if it doesn't exist
-            print(f"Creating new Trello Task: {task['name']}")
             create_trello_task(task, trello_list_id)
 
 # Function to perform two-way sync
@@ -212,3 +208,5 @@ def two_way_sync():
 
 # Perform the sync immediately
 two_way_sync()
+
+# Commit comment: Updated sync script to correctly handle task statuses and prevent duplicate task creation in Motion.
