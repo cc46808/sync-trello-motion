@@ -75,8 +75,7 @@ def update_motion_task(task_id, task):
     data = {
         'name': task['name'],
         'description': task['desc'],
-        'dueDate': task.get('due'),
-        'workspaceId': MOTION_WORKSPACE_ID
+        'dueDate': task.get('due')
     }
     json_data = json.dumps(data)
     conn.request("PATCH", f"/v1/tasks/{task_id}", body=json_data, headers=headers)
