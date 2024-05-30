@@ -18,13 +18,13 @@ on:
         - warning
         - debug
       branch:
-        description: 'branch to run'
+        description: 'Branch to run'
         required: true
         default: 'main'
         type: choice
         options:
           - main 
-          
+
 jobs:
   sync:
     runs-on: ubuntu-latest
