@@ -11,10 +11,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4  # Updated to v4 for Node.js 20
+      uses: actions/checkout@v4  # Use latest version of checkout action
 
     - name: Set up Python
-      uses: actions/setup-python@v4  # Updated to v4 for Node.js 20
+      uses: actions/setup-python@v4  # Use latest version of setup-python action
       with:
         python-version: '3.x'
 
