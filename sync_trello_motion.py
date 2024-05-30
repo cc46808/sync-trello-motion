@@ -93,7 +93,7 @@ def update_motion_task(task_id, task):
         'name': task['name'],
         'description': task['desc'],
         'dueDate': task.get('due'),
-        'status': 'Completed' if task.get('dueComplete') else 'Todo'  # Adjust according to Motion API status values
+        'status': 'Completed' if task.get('dueComplete') else task['status']['name']  # Preserve current status if not completed
     }
     json_data = json.dumps(data)
     conn.request("PATCH", f"/v1/tasks/{task_id}", body=json_data, headers=headers)
@@ -162,9 +162,11 @@ def sync_trello_to_motion():
         if task['name'] in motion_task_dict:
             # Update Motion task if it exists and has changed
             motion_task = motion_task_dict[task['name']]
+            motion_status = 'Completed' if motion_task['status']['name'] == 'Completed' or task['dueComplete'] else 'Todo'
             if (motion_task['description'] != task['desc'] or 
                 motion_task['dueDate'] != task.get('due') or
-                motion_task['status']['name'] != ('Completed' if task['dueComplete'] else 'Todo')):
+                motion_task['status']['name'] != motion_status):
+                task['status'] = {'name': motion_status}
                 update_motion_task(motion_task['id'], task)
         else:
             # Create new Motion task if it doesn't exist
@@ -186,9 +188,11 @@ def sync_motion_to_trello():
         if task['name'] in trello_task_dict:
             # Update Trello task if it exists and has changed
             trello_task = trello_task_dict[task['name']]
+            trello_due_complete = trello_task['dueComplete'] or (task['status']['name'] == 'Completed')
             if (trello_task['desc'] != task['description'] or 
                 trello_task['due'] != task.get('dueDate') or
-                (task['status']['name'] == 'Completed' and not trello_task['dueComplete'])):
+                trello_task['dueComplete'] != trello_due_complete):
+                task['dueComplete'] = trello_due_complete
                 update_trello_task(trello_task['id'], task)
         else:
             # Create new Trello task if it doesn't exist
