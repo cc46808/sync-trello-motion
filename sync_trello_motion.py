@@ -11,6 +11,7 @@ TRELLO_BOARD_ID = os.getenv('TRELLO_BOARD_ID')
 # Motion API credentials from environment variables
 MOTION_API_KEY = os.getenv('MOTION_API_KEY')
 MOTION_API_HOST = 'api.usemotion.com'
+MOTION_WORKSPACE_ID = os.getenv('MOTION_WORKSPACE_ID')
 
 # Function to get Trello tasks
 def get_trello_tasks():
@@ -48,9 +49,10 @@ def create_motion_task(task):
         'X-API-Key': MOTION_API_KEY
     }
     data = {
-        'title': task['name'],
+        'name': task['name'],
         'description': task['desc'],
-        'dueDate': task.get('due')
+        'dueDate': task.get('due'),
+        'workspaceId': MOTION_WORKSPACE_ID
     }
     json_data = json.dumps(data)
     conn.request("POST", "/v1/tasks", body=json_data, headers=headers)
@@ -69,7 +71,7 @@ def create_trello_task(task):
         'key': TRELLO_API_KEY,
         'token': TRELLO_API_TOKEN,
         'idList': TRELLO_BOARD_ID,
-        'name': task['title'],
+        'name': task['name'],
         'desc': task['description'],
         'due': task.get('dueDate')
     }
@@ -85,11 +87,11 @@ def sync_trello_to_motion():
     print("Trello Tasks:", trello_tasks)
     print("Motion Tasks:", motion_tasks)
 
-    # Create a set of Motion task titles to avoid duplicates
-    motion_task_titles = {task['title'] for task in motion_tasks}
+    # Create a set of Motion task names to avoid duplicates
+    motion_task_names = {task['name'] for task in motion_tasks}
 
     for task in trello_tasks:
-        if task['name'] not in motion_task_titles:
+        if task['name'] not in motion_task_names:
             create_motion_task(task)
 
 # Function to sync tasks from Motion to Trello
@@ -104,7 +106,7 @@ def sync_motion_to_trello():
     trello_task_names = {task['name'] for task in trello_tasks}
 
     for task in motion_tasks:
-        if task['title'] not in trello_task_names:
+        if task['name'] not in trello_task_names:
             create_trello_task(task)
 
 # Function to perform two-way sync
