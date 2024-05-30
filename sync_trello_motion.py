@@ -27,13 +27,31 @@ def get_motion_tasks():
     url = f'{MOTION_BASE_URL}/tasks'
     params = {'workspaceId': MOTION_WORKSPACE_ID}
     response = requests.get(url, headers=headers_motion, params=params)
-    return response.json().get('tasks', [])
+    try:
+        response.raise_for_status()
+        return response.json().get('tasks', [])
+    except requests.exceptions.HTTPError as http_err:
+        print(f'HTTP error occurred: {http_err}')
+    except requests.exceptions.RequestException as err:
+        print(f'Error occurred: {err}')
+    except ValueError:
+        print(f'Error decoding JSON response: {response.text}')
+    return []
 
 def get_trello_cards():
     url = f'{TRELLO_BASE_URL}/boards/{TRELLO_BOARD_ID}/cards'
     params = {'key': TRELLO_API_KEY, 'token': TRELLO_API_TOKEN}
     response = requests.get(url, params=params)
-    return response.json()
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f'HTTP error occurred: {http_err}')
+    except requests.exceptions.RequestException as err:
+        print(f'Error occurred: {err}')
+    except ValueError:
+        print(f'Error decoding JSON response: {response.text}')
+    return []
 
 def create_motion_task(name, description):
     url = f'{MOTION_BASE_URL}/tasks'
@@ -44,7 +62,16 @@ def create_motion_task(name, description):
         'priority': 'MEDIUM'
     }
     response = requests.post(url, headers=headers_motion, json=data)
-    return response.json()
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f'HTTP error occurred: {http_err}')
+    except requests.exceptions.RequestException as err:
+        print(f'Error occurred: {err}')
+    except ValueError:
+        print(f'Error decoding JSON response: {response.text}')
+    return None
 
 def create_trello_card(name, description):
     url = f'{TRELLO_BASE_URL}/cards'
@@ -56,20 +83,47 @@ def create_trello_card(name, description):
         'token': TRELLO_API_TOKEN
     }
     response = requests.post(url, data=data)
-    return response.json()
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f'HTTP error occurred: {http_err}')
+    except requests.exceptions.RequestException as err:
+        print(f'Error occurred: {err}')
+    except ValueError:
+        print(f'Error decoding JSON response: {response.text}')
+    return None
 
 def update_motion_task_status(task_id, completed):
     url = f'{MOTION_BASE_URL}/tasks/{task_id}'
     data = {'completed': completed}
     response = requests.patch(url, headers=headers_motion, json=data)
-    return response.json()
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f'HTTP error occurred: {http_err}')
+    except requests.exceptions.RequestException as err:
+        print(f'Error occurred: {err}')
+    except ValueError:
+        print(f'Error decoding JSON response: {response.text}')
+    return None
 
 def update_trello_card_status(card_id, completed):
     url = f'{TRELLO_BASE_URL}/cards/{card_id}'
     data = {'closed': completed}
     params = {'key': TRELLO_API_KEY, 'token': TRELLO_API_TOKEN}
     response = requests.put(url, data=data, params=params)
-    return response.json()
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f'HTTP error occurred: {http_err}')
+    except requests.exceptions.RequestException as err:
+        print(f'Error occurred: {err}')
+    except ValueError:
+        print(f'Error decoding JSON response: {response.text}')
+    return None
 
 def sync_to_trello():
     motion_tasks = get_motion_tasks()
