@@ -93,7 +93,7 @@ def format_date_for_trello(date_str):
     if date_str:
         try:
             date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            return date_obj.isoformat()
+            return date_obj.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         except ValueError:
             return date_str
     return None
