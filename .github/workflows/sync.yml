@@ -11,12 +11,12 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.x'  # Explicitly set the Python version
+        python-version: '3.10'  # Explicitly set the Python version
 
     - name: Cache dependencies
       uses: actions/cache@v3  # v3 is the latest for cache, v4 does not exist
@@ -41,3 +41,4 @@ jobs:
         MOTION_WORKSPACE_ID: ${{ secrets.MOTION_WORKSPACE_ID }}
       run: |
         python sync_trello_motion.py
+      
