@@ -82,6 +82,7 @@ def create_motion_task(task):
     return task_response
 
 # Function to update a task in Motion
+# Function to update a task in Motion
 def update_motion_task(task_id, task):
     conn = http.client.HTTPSConnection(MOTION_API_HOST)
     headers = {
@@ -92,7 +93,8 @@ def update_motion_task(task_id, task):
     data = {
         'name': task['name'],
         'description': task['desc'],
-        'dueDate': task.get('due')
+        'dueDate': task.get('due'),
+        'status': 'Completed' if task.get('dueComplete') else 'Todo'  # Adjust according to Motion API status values
     }
     json_data = json.dumps(data)
     conn.request("PATCH", f"/v1/tasks/{task_id}", body=json_data, headers=headers)
@@ -103,6 +105,7 @@ def update_motion_task(task_id, task):
     task_response = json.loads(response_data.decode("utf-8"))
     conn.close()
     return task_response
+
 
 # Function to format date for Trello
 def format_date_for_trello(date_str):
@@ -115,39 +118,36 @@ def format_date_for_trello(date_str):
     return None
 
 # Function to create a task in Trello
-def create_trello_task(task, id_list):
+def create_trello_task(motion_task, trello_list_id):
     url = "https://api.trello.com/1/cards"
     query = {
         'key': TRELLO_API_KEY,
         'token': TRELLO_API_TOKEN,
-        'idList': id_list,
-        'name': task['name'],
-        'desc': task['description'],
-        'due': format_date_for_trello(task.get('dueDate'))
+        'idList': trello_list_id,
+        'name': motion_task['name'],
+        'desc': motion_task['description'] or '',
+        'due': motion_task.get('dueDate')
     }
-    print(f"Creating Trello Task with payload: {query}")  # Debug line
     response = requests.post(url, params=query)
-    print(f"Trello API Response Status: {response.status_code}")  # Debug line
-    print(f"Trello API Response Data: {response.text}")  # Debug line
     response.raise_for_status()
-    return response.json()
+    print("Created Trello Task Response Status:", response.status_code)
+    print("Created Trello Task Response Data:", response.json())
 
 # Function to update a task in Trello
-def update_trello_task(task_id, task):
-    url = f"https://api.trello.com/1/cards/{task_id}"
+def update_trello_task(trello_task_id, motion_task):
+    url = f"https://api.trello.com/1/cards/{trello_task_id}"
     query = {
         'key': TRELLO_API_KEY,
         'token': TRELLO_API_TOKEN,
-        'name': task['name'],
-        'desc': task['description'],
-        'due': format_date_for_trello(task.get('dueDate'))
+        'name': motion_task['name'],
+        'desc': motion_task['description'] or '',
+        'due': motion_task.get('dueDate'),
+        'dueComplete': 'true' if motion_task['status']['name'] == 'Completed' else 'false'
     }
-    print(f"Updating Trello Task with payload: {query}")  # Debug line
     response = requests.put(url, params=query)
-    print(f"Trello API Response Status: {response.status_code}")  # Debug line
-    print(f"Trello API Response Data: {response.text}")  # Debug line
     response.raise_for_status()
-    return response.json()
+    print("Updated Trello Task Response Status:", response.status_code)
+    print("Updated Trello Task Response Data:", response.json())
 
 # Function to sync tasks from Trello to Motion
 def sync_trello_to_motion():
@@ -188,7 +188,8 @@ def sync_motion_to_trello():
             # Update Trello task if it exists and has changed
             trello_task = trello_task_dict[task['name']]
             if (trello_task['desc'] != task['description'] or 
-                trello_task['due'] != task.get('dueDate')):
+                trello_task['due'] != task.get('dueDate') or
+                (task['status']['name'] == 'Completed' and not trello_task['dueComplete'])):
                 update_trello_task(trello_task['id'], task)
         else:
             # Create new Trello task if it doesn't exist
