@@ -163,7 +163,8 @@ def sync_trello_to_motion():
             # Update Motion task if it exists and has changed
             motion_task = motion_task_dict[task['name']]
             if (motion_task['description'] != task['desc'] or 
-                motion_task['dueDate'] != task.get('due')):
+                motion_task['dueDate'] != task.get('due') or
+                motion_task['status']['name'] != ('Completed' if task['dueComplete'] else 'Todo')):
                 update_motion_task(motion_task['id'], task)
         else:
             # Create new Motion task if it doesn't exist
