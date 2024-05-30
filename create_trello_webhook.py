@@ -15,6 +15,11 @@ def create_trello_webhook(callback_url, id_model, description="Trello Webhook"):
         'idModel': id_model,
         'description': description
     }
+    
+    # Print the URL and parameters for debugging
+    print(f"URL: {url}")
+    print(f"Parameters: {query}")
+    
     response = requests.post(url, params=query)
     response.raise_for_status()
     return response.json()
