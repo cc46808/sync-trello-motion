@@ -33,6 +33,8 @@ def get_motion_tasks():
     conn.request("GET", "/v1/tasks", headers=headers)
     res = conn.getresponse()
     data = res.read()
+    print("Motion API Response Status:", res.status)
+    print("Motion API Response Data:", data)
     tasks = json.loads(data.decode("utf-8"))
     conn.close()
     return tasks
@@ -54,6 +56,8 @@ def create_motion_task(task):
     conn.request("POST", "/v1/tasks", body=json_data, headers=headers)
     res = conn.getresponse()
     response_data = res.read()
+    print("Create Motion Task Response Status:", res.status)
+    print("Create Motion Task Response Data:", response_data)
     task_response = json.loads(response_data.decode("utf-8"))
     conn.close()
     return task_response
@@ -78,6 +82,9 @@ def sync_trello_to_motion():
     trello_tasks = get_trello_tasks()
     motion_tasks = get_motion_tasks()
 
+    print("Trello Tasks:", trello_tasks)
+    print("Motion Tasks:", motion_tasks)
+
     # Create a set of Motion task titles to avoid duplicates
     motion_task_titles = {task['title'] for task in motion_tasks}
 
@@ -89,6 +96,9 @@ def sync_trello_to_motion():
 def sync_motion_to_trello():
     motion_tasks = get_motion_tasks()
     trello_tasks = get_trello_tasks()
+
+    print("Motion Tasks:", motion_tasks)
+    print("Trello Tasks:", trello_tasks)
 
     # Create a set of Trello task names to avoid duplicates
     trello_task_names = {task['name'] for task in trello_tasks}
