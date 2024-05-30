@@ -11,15 +11,13 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4  # Updated to v4 for Node.js 20
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4  # Updated to v4 for Node.js 20
-      with:
-        python-version: '3.x'
+      uses: actions/setup-python@v4
 
     - name: Cache dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4  # Update to v4 for Node.js 20
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
