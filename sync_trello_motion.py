@@ -35,9 +35,9 @@ def get_motion_tasks():
     data = res.read()
     print("Motion API Response Status:", res.status)
     print("Motion API Response Data:", data)
-    tasks = json.loads(data.decode("utf-8"))
+    tasks_response = json.loads(data.decode("utf-8"))
     conn.close()
-    return tasks
+    return tasks_response['tasks']
 
 # Function to create a task in Motion
 def create_motion_task(task):
