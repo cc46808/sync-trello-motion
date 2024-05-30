@@ -64,6 +64,30 @@ def create_motion_task(task):
     conn.close()
     return task_response
 
+# Function to update a task in Motion
+def update_motion_task(task_id, task):
+    conn = http.client.HTTPSConnection(MOTION_API_HOST)
+    headers = {
+        'Accept': "application/json",
+        'Content-Type': 'application/json',
+        'X-API-Key': MOTION_API_KEY
+    }
+    data = {
+        'name': task['name'],
+        'description': task['desc'],
+        'dueDate': task.get('due'),
+        'workspaceId': MOTION_WORKSPACE_ID
+    }
+    json_data = json.dumps(data)
+    conn.request("PATCH", f"/v1/tasks/{task_id}", body=json_data, headers=headers)
+    res = conn.getresponse()
+    response_data = res.read()
+    print("Update Motion Task Response Status:", res.status)
+    print("Update Motion Task Response Data:", response_data)
+    task_response = json.loads(response_data.decode("utf-8"))
+    conn.close()
+    return task_response
+
 # Function to create a task in Trello
 def create_trello_task(task):
     url = "https://api.trello.com/1/cards"
@@ -79,6 +103,20 @@ def create_trello_task(task):
     response.raise_for_status()
     return response.json()
 
+# Function to update a task in Trello
+def update_trello_task(task_id, task):
+    url = f"https://api.trello.com/1/cards/{task_id}"
+    query = {
+        'key': TRELLO_API_KEY,
+        'token': TRELLO_API_TOKEN,
+        'name': task['name'],
+        'desc': task['description'],
+        'due': task.get('dueDate')
+    }
+    response = requests.put(url, params=query)
+    response.raise_for_status()
+    return response.json()
+
 # Function to sync tasks from Trello to Motion
 def sync_trello_to_motion():
     trello_tasks = get_trello_tasks()
@@ -87,11 +125,18 @@ def sync_trello_to_motion():
     print("Trello Tasks:", trello_tasks)
     print("Motion Tasks:", motion_tasks)
 
-    # Create a set of Motion task names to avoid duplicates
-    motion_task_names = {task['name'] for task in motion_tasks}
+    # Create a dictionary of Motion tasks by name for easy lookup
+    motion_task_dict = {task['name']: task for task in motion_tasks}
 
     for task in trello_tasks:
-        if task['name'] not in motion_task_names:
+        if task['name'] in motion_task_dict:
+            # Update Motion task if it exists and has changed
+            motion_task = motion_task_dict[task['name']]
+            if (motion_task['description'] != task['desc'] or 
+                motion_task['dueDate'] != task.get('due')):
+                update_motion_task(motion_task['id'], task)
+        else:
+            # Create new Motion task if it doesn't exist
             create_motion_task(task)
 
 # Function to sync tasks from Motion to Trello
@@ -102,11 +147,18 @@ def sync_motion_to_trello():
     print("Motion Tasks:", motion_tasks)
     print("Trello Tasks:", trello_tasks)
 
-    # Create a set of Trello task names to avoid duplicates
-    trello_task_names = {task['name'] for task in trello_tasks}
+    # Create a dictionary of Trello tasks by name for easy lookup
+    trello_task_dict = {task['name']: task for task in trello_tasks}
 
     for task in motion_tasks:
-        if task['name'] not in trello_task_names:
+        if task['name'] in trello_task_dict:
+            # Update Trello task if it exists and has changed
+            trello_task = trello_task_dict[task['name']]
+            if (trello_task['desc'] != task['description'] or 
+                trello_task['due'] != task.get('dueDate')):
+                update_trello_task(trello_task['id'], task)
+        else:
+            # Create new Trello task if it doesn't exist
             create_trello_task(task)
 
 # Function to perform two-way sync
