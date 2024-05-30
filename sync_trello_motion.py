@@ -31,6 +31,9 @@ def get_motion_tasks():
         'Content-Type': 'application/json'
     }
     response = requests.get(MOTION_API_URL, headers=headers)
+    print("Request Headers:", headers)
+    print("Response Status Code:", response.status_code)
+    print("Response Content:", response.content)
     response.raise_for_status()
     return response.json()
 
