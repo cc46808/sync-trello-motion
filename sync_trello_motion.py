@@ -8,11 +8,27 @@ from datetime import datetime
 TRELLO_API_KEY = os.getenv('TRELLO_API_KEY')
 TRELLO_API_TOKEN = os.getenv('TRELLO_API_TOKEN')
 TRELLO_BOARD_ID = os.getenv('TRELLO_BOARD_ID')
+TRELLO_LIST_NAME = os.getenv('TRELLO_LIST_NAME')  # Add the list name to your environment variables
 
 # Motion API credentials from environment variables
 MOTION_API_KEY = os.getenv('MOTION_API_KEY')
 MOTION_API_HOST = 'api.usemotion.com'
 MOTION_WORKSPACE_ID = os.getenv('MOTION_WORKSPACE_ID')
+
+# Function to get Trello list ID
+def get_trello_list_id(board_id, list_name):
+    url = f"https://api.trello.com/1/boards/{board_id}/lists"
+    query = {
+        'key': TRELLO_API_KEY,
+        'token': TRELLO_API_TOKEN
+    }
+    response = requests.get(url, params=query)
+    response.raise_for_status()
+    lists = response.json()
+    for lst in lists:
+        if lst['name'] == list_name:
+            return lst['id']
+    raise ValueError(f"List '{list_name}' not found on board '{board_id}'")
 
 # Function to get Trello tasks
 def get_trello_tasks():
@@ -99,12 +115,12 @@ def format_date_for_trello(date_str):
     return None
 
 # Function to create a task in Trello
-def create_trello_task(task):
+def create_trello_task(task, id_list):
     url = "https://api.trello.com/1/cards"
     query = {
         'key': TRELLO_API_KEY,
         'token': TRELLO_API_TOKEN,
-        'idList': TRELLO_BOARD_ID,
+        'idList': id_list,
         'name': task['name'],
         'desc': task['description'],
         'due': format_date_for_trello(task.get('dueDate'))
@@ -165,6 +181,7 @@ def sync_motion_to_trello():
 
     # Create a dictionary of Trello tasks by name for easy lookup
     trello_task_dict = {task['name']: task for task in trello_tasks}
+    trello_list_id = get_trello_list_id(TRELLO_BOARD_ID, TRELLO_LIST_NAME)
 
     for task in motion_tasks:
         if task['name'] in trello_task_dict:
@@ -175,7 +192,7 @@ def sync_motion_to_trello():
                 update_trello_task(trello_task['id'], task)
         else:
             # Create new Trello task if it doesn't exist
-            create_trello_task(task)
+            create_trello_task(task, trello_list_id)
 
 # Function to perform two-way sync
 def two_way_sync():
