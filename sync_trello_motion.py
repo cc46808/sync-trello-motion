@@ -1,8 +1,7 @@
 import os
 import requests
 import json
-# import schedule
-# import time
+import http.client
 
 # Trello API credentials from environment variables
 TRELLO_API_KEY = os.getenv('TRELLO_API_KEY')
@@ -11,7 +10,7 @@ TRELLO_BOARD_ID = os.getenv('TRELLO_BOARD_ID')
 
 # Motion API credentials from environment variables
 MOTION_API_KEY = os.getenv('MOTION_API_KEY')
-MOTION_API_URL = 'https://api.usemotion.com/v1/tasks'
+MOTION_API_HOST = 'api.usemotion.com'
 
 # Function to get Trello tasks
 def get_trello_tasks():
@@ -26,31 +25,38 @@ def get_trello_tasks():
 
 # Function to get Motion tasks
 def get_motion_tasks():
+    conn = http.client.HTTPSConnection(MOTION_API_HOST)
     headers = {
-        'Authorization': f"Bearer {MOTION_API_KEY}",
-        'Content-Type': 'application/json'
+        'Accept': "application/json",
+        'X-API-Key': MOTION_API_KEY
     }
-    response = requests.get(MOTION_API_URL, headers=headers)
-    print("Request Headers:", headers)
-    print("Response Status Code:", response.status_code)
-    print("Response Content:", response.content)
-    response.raise_for_status()
-    return response.json()
+    conn.request("GET", "/v1/tasks", headers=headers)
+    res = conn.getresponse()
+    data = res.read()
+    tasks = json.loads(data.decode("utf-8"))
+    conn.close()
+    return tasks
 
 # Function to create a task in Motion
 def create_motion_task(task):
+    conn = http.client.HTTPSConnection(MOTION_API_HOST)
     headers = {
-        'Authorization': f"Bearer {MOTION_API_KEY}",
-        'Content-Type': 'application/json'
+        'Accept': "application/json",
+        'Content-Type': 'application/json',
+        'X-API-Key': MOTION_API_KEY
     }
     data = {
         'title': task['name'],
         'description': task['desc'],
         'dueDate': task.get('due')
     }
-    response = requests.post(MOTION_API_URL, headers=headers, json=data)
-    response.raise_for_status()
-    return response.json()
+    json_data = json.dumps(data)
+    conn.request("POST", "/v1/tasks", body=json_data, headers=headers)
+    res = conn.getresponse()
+    response_data = res.read()
+    task_response = json.loads(response_data.decode("utf-8"))
+    conn.close()
+    return task_response
 
 # Function to create a task in Trello
 def create_trello_task(task):
@@ -72,11 +78,11 @@ def sync_trello_to_motion():
     trello_tasks = get_trello_tasks()
     motion_tasks = get_motion_tasks()
 
-    # Create a set of Trello task names to avoid duplicates
-    trello_task_names = {task['name'] for task in trello_tasks}
+    # Create a set of Motion task titles to avoid duplicates
+    motion_task_titles = {task['title'] for task in motion_tasks}
 
     for task in trello_tasks:
-        if task['name'] not in trello_task_names:
+        if task['name'] not in motion_task_titles:
             create_motion_task(task)
 
 # Function to sync tasks from Motion to Trello
@@ -84,11 +90,11 @@ def sync_motion_to_trello():
     motion_tasks = get_motion_tasks()
     trello_tasks = get_trello_tasks()
 
-    # Create a set of Motion task titles to avoid duplicates
-    motion_task_titles = {task['title'] for task in motion_tasks}
+    # Create a set of Trello task names to avoid duplicates
+    trello_task_names = {task['name'] for task in trello_tasks}
 
     for task in motion_tasks:
-        if task['title'] not in motion_task_titles:
+        if task['title'] not in trello_task_names:
             create_trello_task(task)
 
 # Function to perform two-way sync
@@ -98,6 +104,6 @@ def two_way_sync():
         sync_motion_to_trello()
     except Exception as e:
         print(f"Error during sync: {e}")
-        
+
 # Perform the sync immediately
 two_way_sync()
