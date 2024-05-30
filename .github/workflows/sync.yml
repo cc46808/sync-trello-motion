@@ -17,13 +17,6 @@ on:
         - info
         - warning
         - debug
-      branch:
-        description: 'Branch to run'
-        required: true
-        default: 'main'
-        type: choice
-        options:
-          - main 
 
 jobs:
   sync:
