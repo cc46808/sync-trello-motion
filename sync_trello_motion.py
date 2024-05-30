@@ -82,7 +82,6 @@ def create_motion_task(task):
     return task_response
 
 # Function to update a task in Motion
-# Function to update a task in Motion
 def update_motion_task(task_id, task):
     conn = http.client.HTTPSConnection(MOTION_API_HOST)
     headers = {
@@ -105,7 +104,6 @@ def update_motion_task(task_id, task):
     task_response = json.loads(response_data.decode("utf-8"))
     conn.close()
     return task_response
-
 
 # Function to format date for Trello
 def format_date_for_trello(date_str):
