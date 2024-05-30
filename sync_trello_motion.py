@@ -93,7 +93,7 @@ def update_motion_task(task_id, task):
         'name': task['name'],
         'description': task['desc'],
         'dueDate': task.get('due'),
-        'status': 'Completed' if task.get('dueComplete') else task['status']['name']  # Preserve current status if not completed
+        'status': 'Completed' if task.get('dueComplete') else task['status']['name']
     }
     json_data = json.dumps(data)
     conn.request("PATCH", f"/v1/tasks/{task_id}", body=json_data, headers=headers)
@@ -162,7 +162,7 @@ def sync_trello_to_motion():
         if task['name'] in motion_task_dict:
             # Update Motion task if it exists and has changed
             motion_task = motion_task_dict[task['name']]
-            motion_status = 'Completed' if motion_task['status']['name'] == 'Completed' or task['dueComplete'] else 'Todo'
+            motion_status = 'Completed' if task['dueComplete'] else 'Todo'
             if (motion_task['description'] != task['desc'] or 
                 motion_task['dueDate'] != task.get('due') or
                 motion_task['status']['name'] != motion_status):
