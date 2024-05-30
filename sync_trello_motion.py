@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import http.client
+from datetime import datetime
 
 # Trello API credentials from environment variables
 TRELLO_API_KEY = os.getenv('TRELLO_API_KEY')
@@ -87,6 +88,16 @@ def update_motion_task(task_id, task):
     conn.close()
     return task_response
 
+# Function to format date for Trello
+def format_date_for_trello(date_str):
+    if date_str:
+        try:
+            date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return date_obj.isoformat()
+        except ValueError:
+            return date_str
+    return None
+
 # Function to create a task in Trello
 def create_trello_task(task):
     url = "https://api.trello.com/1/cards"
@@ -96,7 +107,7 @@ def create_trello_task(task):
         'idList': TRELLO_BOARD_ID,
         'name': task['name'],
         'desc': task['description'],
-        'due': task.get('dueDate')
+        'due': format_date_for_trello(task.get('dueDate'))
     }
     response = requests.post(url, params=query)
     response.raise_for_status()
@@ -110,7 +121,7 @@ def update_trello_task(task_id, task):
         'token': TRELLO_API_TOKEN,
         'name': task['name'],
         'desc': task['description'],
-        'due': task.get('dueDate')
+        'due': format_date_for_trello(task.get('dueDate'))
     }
     response = requests.put(url, params=query)
     response.raise_for_status()
