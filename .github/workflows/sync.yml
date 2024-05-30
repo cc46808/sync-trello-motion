@@ -3,20 +3,7 @@ name: Sync Motion and Trello
 on:
   schedule:
     - cron: '*/5 * * * *' # Runs every 5 minutes
-  push:
-    branches:
-      - 'main'
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'debug'
-        type: choice
-        options:
-        - info
-        - warning
-        - debug
 
 jobs:
   sync:
