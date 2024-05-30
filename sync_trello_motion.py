@@ -1,8 +1,8 @@
 import os
 import requests
 import json
-import schedule
-import time
+# import schedule
+# import time
 
 # Trello API credentials from environment variables
 TRELLO_API_KEY = os.getenv('TRELLO_API_KEY')
