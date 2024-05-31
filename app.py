@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request
+from flask import Flask, request # type: ignore
 import logging
 import app.sync_trello_motion as sync_trello_motion  # Import the sync script from the root directory
 
