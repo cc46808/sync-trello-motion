@@ -13,15 +13,12 @@ def handle_webhook():
         return '', 200
     app.logger.info(f"Received POST request with data: {request.json}")
     
-    # Extract the relevant information from the webhook payload
-    action = request.json.get('action')
-    if action and action.get('type') == 'updateCard':
-        card = action.get('data', {}).get('card', {})
-        trello_card_id = card.get('id')
-        if card.get('dueComplete'):
-            # Update the corresponding task in Motion as completed
-            sync_trello_motion.update_motion_task_with_trello_completion(trello_card_id)
-    
+    data = request.json
+    if 'action' in data and 'data' in data['action']:
+        card_id = data['action']['data']['card']['id']
+        app.logger.info(f"Card ID to update in Motion: {card_id}")
+        sync_trello_motion.update_motion_task_with_trello_status(card_id)
+
     return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':

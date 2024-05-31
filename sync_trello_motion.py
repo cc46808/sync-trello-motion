@@ -198,9 +198,9 @@ def two_way_sync():
     except Exception as e:
         logging.error(f"Error during sync: {e}")
 
-# Function to update Motion task when Trello task is completed
-def update_motion_task_with_trello_completion(trello_card_id):
-    logging.debug(f"Updating Motion task with completion status from Trello card {trello_card_id}")
+# Function to update Motion task when Trello task status changes
+def update_motion_task_with_trello_status(trello_card_id):
+    logging.debug(f"Updating Motion task with status from Trello card {trello_card_id}")
     trello_tasks = get_trello_tasks()
     for task in trello_tasks:
         if task['id'] == trello_card_id:
@@ -208,7 +208,7 @@ def update_motion_task_with_trello_completion(trello_card_id):
             motion_tasks = get_motion_tasks()
             for motion_task in motion_tasks:
                 if motion_task['name'] == task['name']:
-                    # Update the Motion task status to Completed
+                    # Update the Motion task status
                     update_motion_task(motion_task['id'], task)
                     logging.debug(f"Updated Motion task {motion_task['id']} for Trello card {trello_card_id}")
                     return
