@@ -111,26 +111,26 @@ def update_motion_task_with_trello_status(trello_card_id):
     logging.info(f"No Trello card found with ID {trello_card_id}")
 
 # Flask app to handle webhooks from Trello
-from flask import Flask, request, jsonify
+# from flask import Flask, request, jsonify
 
-app = Flask(__name__)
+# app = Flask(__name__)
 
-@app.route('/webhook', methods=['POST'])
-def handle_webhook():
-    data = request.json
-    logging.info(f"Received POST request with data: {data}")
+# @app.route('/webhook', methods=['POST'])
+# def handle_webhook():
+#     data = request.json
+#     logging.info(f"Received POST request with data: {data}")
 
-    if 'action' in data:
-        action = data['action']
-        if 'data' in action and 'card' in action['data']:
-            card_id = action['data']['card']['id']
-            logging.info(f"Card ID to update in Motion: {card_id}")
-            try:
-                update_motion_task_with_trello_status(card_id)
-            except Exception as e:
-                logging.error(f"Exception occurred: {e}")
-                return jsonify({'status': 'error', 'message': str(e)}), 500
-    return jsonify({'status': 'success'}), 200
+#     if 'action' in data:
+#         action = data['action']
+#         if 'data' in action and 'card' in action['data']:
+#             card_id = action['data']['card']['id']
+#             logging.info(f"Card ID to update in Motion: {card_id}")
+#             try:
+#                 update_motion_task_with_trello_status(card_id)
+#             except Exception as e:
+#                 logging.error(f"Exception occurred: {e}")
+#                 return jsonify({'status': 'error', 'message': str(e)}), 500
+#     return jsonify({'status': 'success'}), 200
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+# if __name__ == '__main__':
+#     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
