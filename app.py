@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify # type: ignore
 import logging
 import sync_trello_motion
 
