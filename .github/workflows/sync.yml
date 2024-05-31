@@ -30,5 +30,5 @@ jobs:
         MOTION_API_KEY: ${{ secrets.MOTION_API_KEY }}
         MOTION_WORKSPACE_ID: ${{ secrets.MOTION_WORKSPACE_ID }}
       run: |
-        python app/sync_trello_motion.py
+        python sync_trello_motion.py
       
