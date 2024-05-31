@@ -14,6 +14,12 @@ TRELLO_API_TOKEN = os.getenv('TRELLO_API_TOKEN')
 TRELLO_BOARD_ID = os.getenv('TRELLO_BOARD_ID')
 TRELLO_LIST_NAME = os.getenv('TRELLO_LIST_NAME')
 
+# Log the environment variables to debug
+logging.debug(f"TRELLO_API_KEY: {TRELLO_API_KEY}")
+logging.debug(f"TRELLO_API_TOKEN: {TRELLO_API_TOKEN}")
+logging.debug(f"TRELLO_BOARD_ID: {TRELLO_BOARD_ID}")
+logging.debug(f"TRELLO_LIST_NAME: {TRELLO_LIST_NAME}")
+
 # Motion API credentials from environment variables
 MOTION_API_KEY = os.getenv('MOTION_API_KEY')
 MOTION_API_HOST = 'api.usemotion.com'
