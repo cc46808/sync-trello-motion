@@ -182,5 +182,23 @@ def two_way_sync():
     except Exception as e:
         print(f"Error during sync: {e}")
 
-# Perform the sync immediately
-two_way_sync()
+# Function to update Motion task when Trello task is completed
+def update_motion_task_with_trello_completion(trello_card_id):
+    trello_tasks = get_trello_tasks()
+    for task in trello_tasks:
+        if task['id'] == trello_card_id:
+            # Find the corresponding Motion task by name or another identifier
+            motion_tasks = get_motion_tasks()
+            for motion_task in motion_tasks:
+                if motion_task['name'] == task['name']:
+                    # Update the Motion task status to Completed
+                    update_motion_task(motion_task['id'], task)
+                    print(f"Updated Motion task {motion_task['id']} for Trello card {trello_card_id}")
+                    return
+            print(f"No corresponding Motion task found for Trello card {trello_card_id}")
+            return
+    print(f"No Trello card found with ID {trello_card_id}")
+
+# Perform the sync immediately (only if this script is run directly)
+if __name__ == "__main__":
+    two_way_sync()
