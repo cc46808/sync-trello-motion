@@ -3,6 +3,10 @@ import requests
 import json
 import http.client
 from datetime import datetime
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
 
 # Trello API credentials from environment variables
 TRELLO_API_KEY = os.getenv('TRELLO_API_KEY')
@@ -131,6 +135,7 @@ def update_trello_task(trello_task_id, motion_task):
 
 # Function to sync tasks from Trello to Motion
 def sync_trello_to_motion():
+    logging.debug("Syncing Trello to Motion")
     trello_tasks = get_trello_tasks()
     motion_tasks = get_motion_tasks()
 
@@ -147,12 +152,15 @@ def sync_trello_to_motion():
                 motion_task['status']['name'] != motion_status):
                 task['status'] = {'name': motion_status}
                 update_motion_task(motion_task['id'], task)
+                logging.debug(f"Updated Motion task {motion_task['id']} with Trello task {task['id']}")
         else:
             # Create new Motion task if it doesn't exist
-            create_motion_task(task)
+            created_task = create_motion_task(task)
+            logging.debug(f"Created new Motion task {created_task['id']} from Trello task {task['id']}")
 
 # Function to sync tasks from Motion to Trello
 def sync_motion_to_trello():
+    logging.debug("Syncing Motion to Trello")
     motion_tasks = get_motion_tasks()
     trello_tasks = get_trello_tasks()
     
@@ -170,9 +178,11 @@ def sync_motion_to_trello():
                 trello_task['dueComplete'] != trello_due_complete):
                 task['dueComplete'] = trello_due_complete
                 update_trello_task(trello_task['id'], task)
+                logging.debug(f"Updated Trello task {trello_task['id']} with Motion task {task['id']}")
         else:
             # Create new Trello task if it doesn't exist
-            create_trello_task(task, trello_list_id)
+            created_task = create_trello_task(task, trello_list_id)
+            logging.debug(f"Created new Trello task {created_task['id']} from Motion task {task['id']}")
 
 # Function to perform two-way sync
 def two_way_sync():
@@ -180,10 +190,11 @@ def two_way_sync():
         sync_trello_to_motion()
         sync_motion_to_trello()
     except Exception as e:
-        print(f"Error during sync: {e}")
+        logging.error(f"Error during sync: {e}")
 
 # Function to update Motion task when Trello task is completed
 def update_motion_task_with_trello_completion(trello_card_id):
+    logging.debug(f"Updating Motion task with completion status from Trello card {trello_card_id}")
     trello_tasks = get_trello_tasks()
     for task in trello_tasks:
         if task['id'] == trello_card_id:
@@ -193,11 +204,11 @@ def update_motion_task_with_trello_completion(trello_card_id):
                 if motion_task['name'] == task['name']:
                     # Update the Motion task status to Completed
                     update_motion_task(motion_task['id'], task)
-                    print(f"Updated Motion task {motion_task['id']} for Trello card {trello_card_id}")
+                    logging.debug(f"Updated Motion task {motion_task['id']} for Trello card {trello_card_id}")
                     return
-            print(f"No corresponding Motion task found for Trello card {trello_card_id}")
+            logging.debug(f"No corresponding Motion task found for Trello card {trello_card_id}")
             return
-    print(f"No Trello card found with ID {trello_card_id}")
+    logging.debug(f"No Trello card found with ID {trello_card_id}")
 
 # Perform the sync immediately (only if this script is run directly)
 if __name__ == "__main__":

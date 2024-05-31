@@ -11,19 +11,17 @@ def handle_webhook():
     if request.method == 'HEAD':
         app.logger.info("Received HEAD request")
         return '', 200
+    app.logger.info(f"Received POST request with data: {request.json}")
     
-    data = request.json
-    app.logger.info(f"Received POST request with data: {data}")
+    # Extract the relevant information from the webhook payload
+    action = request.json.get('action')
+    if action and action.get('type') == 'updateCard':
+        card = action.get('data', {}).get('card', {})
+        trello_card_id = card.get('id')
+        if card.get('dueComplete'):
+            # Update the corresponding task in Motion as completed
+            sync_trello_motion.update_motion_task_with_trello_completion(trello_card_id)
     
-    try:
-        if data['action']['type'] == 'updateCard':
-            if 'dueComplete' in data['action']['data']['card'] and data['action']['data']['card']['dueComplete'] == True:
-                trello_card_id = data['action']['data']['card']['id']
-                # Invoke the sync function
-                sync_trello_motion.update_motion_task_with_trello_completion(trello_card_id)
-    except KeyError as e:
-        app.logger.error(f"Error processing webhook data: {e}")
-
     return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':
