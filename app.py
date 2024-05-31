@@ -1,27 +1,27 @@
 import os
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import logging
-import sync_trello_motion  # Ensure this is the correct import path
+import sync_trello_motion
 
 app = Flask(__name__)
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/webhook', methods=['POST'])
 def handle_webhook():
     data = request.json
     logging.info(f"Received POST request with data: {data}")
-
-    try:
+    
+    if 'action' in data and 'card' in data['action']['data']:
         card_id = data['action']['data']['card']['id']
         logging.info(f"Card ID to update in Motion: {card_id}")
-        sync_trello_motion.update_motion_task_with_trello_status(card_id)
-        return '', 200
-    except Exception as e:
-        logging.error(f"Exception occurred: {e}")
-        return str(e), 500
+        try:
+            sync_trello_motion.update_motion_task_with_trello_status(card_id)
+        except Exception as e:
+            logging.error(f"Exception occurred: {e}")
+            return jsonify({'error': str(e)}), 500
+
+    return '', 200
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=True, port=os.getenv('PORT', 5000))
