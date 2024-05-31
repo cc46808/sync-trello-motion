@@ -44,40 +44,6 @@ def get_motion_tasks():
     conn.close()
     return tasks_response['tasks']
 
-# Function to update a task in Trello
-def update_trello_task(trello_card_id, motion_task):
-    url = f"https://api.trello.com/1/cards/{trello_card_id}"
-    query = {
-        'key': TRELLO_API_KEY,
-        'token': TRELLO_API_TOKEN,
-        'name': motion_task['name'],
-        'desc': motion_task.get('description', ''),
-        'due': motion_task.get('dueDate'),
-        'dueComplete': 'true' if motion_task['status']['name'] == 'Completed' else 'false'
-    }
-    response = requests.put(url, params=query)
-    response.raise_for_status()
-    return response.json()
-
-# Function to update Trello task with Motion status
-def update_trello_task_with_motion_status(motion_task_id):
-    trello_tasks = get_trello_tasks()
-    motion_tasks = get_motion_tasks()
-
-    logging.debug(f"Trello tasks: {trello_tasks}")
-    logging.debug(f"Motion tasks: {motion_tasks}")
-
-    for motion_task in motion_tasks:
-        if motion_task['id'] == motion_task_id:
-            for trello_task in trello_tasks:
-                if trello_task['name'] == motion_task['name']:
-                    update_trello_task(trello_task['id'], motion_task)
-                    logging.info(f"Updated Trello task {trello_task['id']} for Motion task {motion_task_id}")
-                    return
-            logging.info(f"No corresponding Trello task found for Motion task {motion_task_id}.")
-            return
-    logging.info(f"No Motion task found with ID {motion_task_id}")
-
 # Function to create a task in Motion
 def create_motion_task(task):
     conn = http.client.HTTPSConnection(MOTION_API_HOST)
@@ -124,23 +90,6 @@ def update_motion_task(task_id, task):
     conn.close()
     return task_response
 
-# Main function to sync completed Motion tasks to Trello
-def sync_completed_motion_tasks_to_trello():
-    logging.info("Checking for completed tasks in Motion...")
-    motion_tasks = get_motion_tasks()
-    trello_tasks = get_trello_tasks()
-
-    # Create a dictionary of Trello tasks by name for easy lookup
-    trello_task_dict = {task['name']: task for task in trello_tasks}
-
-    for task in motion_tasks:
-        if task['status']['name'] == 'Completed' and task['name'] in trello_task_dict:
-            trello_task = trello_task_dict[task['name']]
-            logging.info(f"Updating Trello task '{trello_task['name']}' with Motion task '{task['name']}' status")
-            update_trello_task(trello_task['id'], task)
-            # Mark the Motion task as completed in Motion after syncing to Trello
-            update_motion_task(task['id'], task)
-
 # Function to update Motion task with Trello status
 def update_motion_task_with_trello_status(trello_card_id):
     trello_tasks = get_trello_tasks()
@@ -161,6 +110,27 @@ def update_motion_task_with_trello_status(trello_card_id):
             return
     logging.info(f"No Trello card found with ID {trello_card_id}")
 
-if __name__ == "__main__":
-    # If running as a standalone script, sync from Motion to Trello
-    sync_completed_motion_tasks_to_trello()
+# Flask app to handle webhooks from Trello
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/webhook', methods=['POST'])
+def handle_webhook():
+    data = request.json
+    logging.info(f"Received POST request with data: {data}")
+
+    if 'action' in data:
+        action = data['action']
+        if 'data' in action and 'card' in action['data']:
+            card_id = action['data']['card']['id']
+            logging.info(f"Card ID to update in Motion: {card_id}")
+            try:
+                update_motion_task_with_trello_status(card_id)
+            except Exception as e:
+                logging.error(f"Exception occurred: {e}")
+                return jsonify({'status': 'error', 'message': str(e)}), 500
+    return jsonify({'status': 'success'}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
