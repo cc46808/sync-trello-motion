@@ -18,6 +18,58 @@ MOTION_API_KEY = os.getenv('MOTION_API_KEY')
 MOTION_API_HOST = 'api.usemotion.com'
 MOTION_WORKSPACE_ID = os.getenv('MOTION_WORKSPACE_ID')
 
+# Function to get Trello lists
+def get_trello_lists():
+    url = f"https://api.trello.com/1/boards/{TRELLO_BOARD_ID}/lists"
+    query = {
+        'key': TRELLO_API_KEY,
+        'token': TRELLO_API_TOKEN
+    }
+    logging.debug(f"Getting Trello lists with URL: {url} and query: {query}")
+    response = requests.get(url, params=query)
+    response.raise_for_status()
+    return response.json()
+
+# Function to get Trello tasks
+def get_trello_tasks():
+    url = f"https://api.trello.com/1/boards/{TRELLO_BOARD_ID}/cards"
+    query = {
+        'key': TRELLO_API_KEY,
+        'token': TRELLO_API_TOKEN
+    }
+    logging.debug(f"Getting Trello tasks with URL: {url} and query: {query}")
+    response = requests.get(url, params=query)
+    response.raise_for_status()
+    return response.json()
+
+# Function to create a task in Trello
+def create_trello_task(task):
+    lists = get_trello_lists()
+    list_id = None
+    for lst in lists:
+        if lst['name'] == TRELLO_LIST_NAME:
+            list_id = lst['id']
+            break
+    
+    if not list_id:
+        logging.error(f"List named '{TRELLO_LIST_NAME}' not found in Trello board.")
+        return
+    
+    url = f"https://api.trello.com/1/cards"
+    query = {
+        'key': TRELLO_API_KEY,
+        'token': TRELLO_API_TOKEN
+    }
+    data = {
+        'name': task['name'],
+        'desc': task['description'],
+        'idList': list_id
+    }
+    logging.debug(f"Creating new Trello task with data: {data}")
+    response = requests.post(url, params=query, json=data)
+    response.raise_for_status()
+    return response.json()
+
 # Function to get Motion tasks
 def get_motion_tasks():
     conn = http.client.HTTPSConnection(MOTION_API_HOST)
@@ -32,74 +84,20 @@ def get_motion_tasks():
     conn.close()
     return tasks_response['tasks']
 
-# Function to get Trello lists
-def get_trello_lists():
-    url = f"https://api.trello.com/1/boards/{TRELLO_BOARD_ID}/lists"
-    query = {
-        'key': TRELLO_API_KEY,
-        'token': TRELLO_API_TOKEN
-    }
-    response = requests.get(url, params=query)
-    response.raise_for_status()
-    return response.json()
-
-# Function to create a task in Trello
-def create_trello_task(task, list_id):
-    url = f"https://api.trello.com/1/cards"
-    query = {
-        'key': TRELLO_API_KEY,
-        'token': TRELLO_API_TOKEN,
-        'idList': list_id,
-        'name': task['name'],
-        'desc': task.get('description', ''),
-        'due': task.get('dueDate')
-    }
-    response = requests.post(url, params=query)
-    response.raise_for_status()
-    return response.json()
-
-# Function to update a task in Trello
-def update_trello_task(card_id, task):
-    url = f"https://api.trello.com/1/cards/{card_id}"
-    query = {
-        'key': TRELLO_API_KEY,
-        'token': TRELLO_API_TOKEN,
-        'name': task['name'],
-        'desc': task.get('description', ''),
-        'due': task.get('dueDate')
-    }
-    response = requests.put(url, params=query)
-    response.raise_for_status()
-    return response.json()
-
 # Function to sync Motion tasks to Trello
 def sync_motion_to_trello():
     motion_tasks = get_motion_tasks()
-    trello_lists = get_trello_lists()
-    
-    # Find the target list in Trello
-    target_list_id = None
-    for trello_list in trello_lists:
-        if trello_list['name'] == TRELLO_LIST_NAME:
-            target_list_id = trello_list['id']
-            break
-    
-    if not target_list_id:
-        logging.error(f"Target list '{TRELLO_LIST_NAME}' not found in Trello board '{TRELLO_BOARD_ID}'")
-        return
+    trello_tasks = get_trello_tasks()
 
-    # Get existing Trello cards
-    existing_trello_tasks = {card['name']: card for card in get_trello_tasks()}
-    
-    for task in motion_tasks:
-        if task['name'] in existing_trello_tasks:
-            # Update existing Trello task
-            update_trello_task(existing_trello_tasks[task['name']]['id'], task)
-            logging.info(f"Updated Trello task for Motion task '{task['name']}'")
+    existing_trello_tasks = {card['name']: card for card in trello_tasks}
+
+    for motion_task in motion_tasks:
+        if motion_task['name'] not in existing_trello_tasks:
+            logging.info(f"Creating new Trello task for Motion task '{motion_task['name']}'")
+            create_trello_task(motion_task)
         else:
-            # Create new Trello task
-            create_trello_task(task, target_list_id)
-            logging.info(f"Created new Trello task for Motion task '{task['name']}'")
+            logging.info(f"Trello task already exists for Motion task '{motion_task['name']}'")
 
+# Run the sync process
 if __name__ == "__main__":
     sync_motion_to_trello()
